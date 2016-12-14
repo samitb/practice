@@ -31,8 +31,8 @@ taskManagerModule.controller('taskManagerController', function ($scope,$http) {
             });
     }
 
-    findAllTasks();
-
+    findAllTasks();   
+    
 	//add a new task
 	$scope.addTask = function addTask() {
 		if($scope.taskName=="" || $scope.taskDesc=="" || $scope.taskPriority == "" || $scope.taskStatus == ""){
@@ -98,6 +98,110 @@ taskManagerModule.controller('taskManagerController', function ($scope,$http) {
 	
 });
 
+//Samit
+//var orderManagerModule = angular.module('taskManagerApp', ['ngAnimate']);
+
+taskManagerModule.controller('orderManagerController', function ($scope,$http) {
+	
+	var urlBase="";
+	$scope.toggle2=true;
+	$scope.selection = [];
+	$scope.statuses=['ACTIVE','COMPLETED'];
+	$scope.priorities=['HIGH','LOW','MEDIUM'];
+	$http.defaults.headers.post["Content-Type"] = "application/json";
+
+    function findAllOrders() {
+        //get all tasks and display initially
+        $http.get(urlBase + '/orders/search/findByOrderArchived?archivedfalse=0').
+            success(function (data) {
+                if (data._embedded != undefined) {
+                    $scope.orders = data._embedded.orders;
+                } else {
+                    $scope.orders = [];
+                }
+                for (var i = 0; i < $scope.orders.length; i++) {
+                    if ($scope.orders[i].orderStatus == 'COMPLETED') {
+                        $scope.selection.push($scope.orders[i].orderId);
+                    }
+                }
+                $scope.orderName="";
+                $scope.orderDesc="";
+                $scope.orderPriority="";
+                $scope.orderStatus="";
+                $scope.toggle2='!toggle2';
+            });
+    }
+
+    findAllOrders();
+    
+  //add a new order
+    $scope.addOrder = function addOrder() {
+    	if($scope.orderName=="" || $scope.orderDesc=="" || $scope.orderPriority == "" || $scope.orderStatus == ""){
+    		alert("Insufficient Data! Please provide values for order name, description, priortiy and status");
+    	}
+    	else{
+    	 $http.post(urlBase + '/orders', {
+    		 orderName: $scope.orderName,
+    		 orderDescription: $scope.orderDesc,
+    		 orderPriority: $scope.orderPriority,
+    		 orderStatus: $scope.orderStatus
+         }).
+    	  success(function(data, status, headers) {
+    		 alert("Order added");
+             var newOrderUri = headers()["location"];
+             console.log("Might be good to GET " + newOrderUri + " and append the order.");
+             // Refetching EVERYTHING every time can get expensive over time
+             // Better solution would be to $http.get(headers()["location"]) and add it to the list
+             findAllOrders();
+    	    });
+    	}
+    };
+		
+	// toggle selection for a given task by task id
+	  $scope.toggleSelection = function toggleSelection(orderUri) {
+	    var idx = $scope.selection.indexOf(orderUri);
+
+	    // is currently selected
+        // HTTP PATCH to ACTIVE state
+	    if (idx > -1) {
+	      $http.patch(orderUri, { orderStatus: 'ACTIVE' }).
+		  success(function(data) {
+		      alert("Order unmarked");
+              findAllOrders();
+		    });
+	      $scope.selection.splice(idx, 1);
+	    }
+
+	    // is newly selected
+        // HTTP PATCH to COMPLETED state
+	    else {
+	      $http.patch(orderUri, { orderStatus: 'COMPLETED' }).
+		  success(function(data) {
+			  alert("Task marked completed");
+              findAllOrders();
+		    });
+	      $scope.selection.push(orderUri);
+	    }
+	  };
+	  
+	
+	// Archive Completed Orders
+	  $scope.archiveOrders = function archiveOrders() {
+          $scope.selection.forEach(function(orderUri) {
+              if (taskUri != undefined) {
+                  $http.patch(orderUri, { orderArchived: 1});
+              }
+          });
+          alert("Successfully Archived");
+          console.log("It's risky to run this without confirming all the patches are done. when.js is great for that");
+          findAllOrders();
+	  };
+	
+});
+//Samit end
+
+
+
 //Angularjs Directive for confirm dialog box
 taskManagerModule.directive('ngConfirmClick', [
 	function(){
@@ -113,3 +217,5 @@ taskManagerModule.directive('ngConfirmClick', [
              }
          };
  }]);
+
+
