@@ -30,6 +30,7 @@ class TransposeAMatrix
       }
  
       System.out.println("Transpose of entered matrix:-");
+      
  
       for ( c = 0 ; c < n ; c++ )
       {
